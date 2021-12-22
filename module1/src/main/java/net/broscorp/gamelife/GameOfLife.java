@@ -22,19 +22,6 @@ import java.util.stream.Stream;
 
 public class GameOfLife {
 
-  public static void main(String[] args) {
-
-    String[][] gameField = createGameFiledFromFile("inputGliderEasy.txt");
-    int iteration = Integer.parseInt(getParametersFromFile("inputGliderEasy.txt").get(0).split(",")[2]);
-    int[][] directionField = createDirectionField();
-    String[][] nextGameField = new String[gameField.length][gameField[0].length];
-    while (iteration>0){
-      gameIteration(gameField, directionField, nextGameField);
-      iteration--;
-    }
-    saveResultToFile(gameField, "expectedTest.txt");
-  }
-
   public void game(String fileNameInput, String fileNameOutput) {
 
     String[][] gameField = createGameFiledFromFile(fileNameInput);
@@ -46,55 +33,61 @@ public class GameOfLife {
       iteration--;
     }
     saveResultToFile(gameField, fileNameOutput);
-
   }
 
-  private static void gameIteration(String[][] gameField, int[][] directionField,
+  private void gameIteration(String[][] gameField, int[][] directionField,
       String[][] nextGameField) {
     int high2DArray = gameField.length;
     int width2DArray = gameField[0].length;
     for(int rowIndex = 0; rowIndex < high2DArray; rowIndex++){
       for(int columnIndex = 0; columnIndex < width2DArray; columnIndex++){
-        int liveCellCount = calculateLiveCell(gameField, directionField, rowIndex, columnIndex);
+        int liveCellCount = calculateLiveCell(gameField, rowIndex, columnIndex);
 //        refactor logic operation
-        switch (liveCellCount) {
-          case 2:
-            nextGameField[rowIndex][columnIndex] = gameField[rowIndex][columnIndex];
-            break;
-          case 3:
-            nextGameField[rowIndex][columnIndex] = "X";
-            break;
-          default:
-            nextGameField[rowIndex][columnIndex] = "O";
+        if ((gameField[rowIndex][columnIndex].equals("X")) && (liveCellCount < 2)) {
+          nextGameField[rowIndex][columnIndex] = "O";
+        } else if ((gameField[rowIndex][columnIndex].equals("X")) && (liveCellCount > 3)) {
+          nextGameField[rowIndex][columnIndex] = "O";
+        } else if ((gameField[rowIndex][columnIndex].equals("X")) && (liveCellCount == 3)) {
+          nextGameField[rowIndex][columnIndex] = "X";
+        } else {
+          nextGameField[rowIndex][columnIndex] = gameField[rowIndex][columnIndex];
         }
-
       }
     }
-    for(int rowIndex = 0; rowIndex < gameField.length; rowIndex++){
-      for(int columnIndex = 0; columnIndex < gameField[0].length; columnIndex++){
-        gameField[rowIndex][columnIndex] = nextGameField[rowIndex][columnIndex];
-      }
-    }
+//    for(int rowIndex = 0; rowIndex < gameField.length; rowIndex++){
+//      for(int columnIndex = 0; columnIndex < gameField[0].length; columnIndex++){
+//        gameField[rowIndex][columnIndex] = nextGameField[rowIndex][columnIndex];
+//      }
+//    }
   }
 
-  private static int calculateLiveCell(String[][] gameField, int[][] directionField, int rowIndex, int columnIndex) {
+  private int calculateLiveCell(String[][] gameField, int rowIndex, int columnIndex) {
     int liveCellCount = 0;
-    for(int[] direction : directionField){
-      int x = direction[0] + rowIndex;
-      int y = direction[1] + columnIndex;
-      boolean isCellHasNeighbor = (x >= 0 && x < gameField.length) && (y >= 0 && y < gameField[0].length);
-      if(isCellHasNeighbor && gameField[x][y] != null && gameField[x][y].equals("X")) {
-        liveCellCount++;
+    for (int x = -1; x <= 1; x++) {
+      for (int y = -1; y <= 1; y++) {
+        int neighborIndexByRows = (rowIndex + x + gameField.length) % gameField.length;
+        int neighborIndexByColumns = (columnIndex + y + gameField[0].length) % gameField[0].length;
+
+        liveCellCount += gameField[neighborIndexByRows][neighborIndexByColumns].equals("X") ? 1 : 0;
       }
     }
+//    liveCellCount -= gameField[rowIndex][columnIndex].equals("X") ? 1 : 0;
+//    for(int[] direction : directionField){
+//      int x = direction[0] + rowIndex;
+//      int y = direction[1] + columnIndex;
+//      boolean isCellHasNeighbor = (x >= 0 && x < gameField.length) && (y >= 0 && y < gameField[0].length);
+//      if(isCellHasNeighbor && gameField[x][y] != null && gameField[x][y].equals("X")) {
+//        liveCellCount++;
+//      }
+//    }
     return liveCellCount;
   }
 
-  private static int[][] createDirectionField() {
+  private int[][] createDirectionField() {
     return new int[][]{{-1,0},{-1,1},{0,1},{1,1},{1,0},{1,-1},{0,-1},{-1,-1}};
   }
 
-  private static void saveResultToFile(String[][] gameField, String fileNameOutput) {
+  private void saveResultToFile(String[][] gameField, String fileNameOutput) {
     String filePath = "src/test/resources/" + fileNameOutput;
     File file = new File(filePath);
 
@@ -105,19 +98,21 @@ public class GameOfLife {
     }
   }
 
-  private static String convertArrayToString(String[][] gameField) {
-    String gameFiledToStr = "";
+  private String convertArrayToString(String[][] gameField) {
+    StringBuilder gameFiledToStr = new StringBuilder();
     for (int row = 0; row < gameField.length; row++) {
       for (int col = 0; col < gameField[row].length; col++) {
-        gameFiledToStr += gameField[row][col] + " ";
+        gameFiledToStr.append(gameField[row][col]);
+        if (col != gameField[row].length) gameFiledToStr.append(" ");
+
       }
-      gameFiledToStr += "\n";
+      if (row < gameField.length -1) gameFiledToStr.append("\n");
     }
-    return gameFiledToStr;
+    return gameFiledToStr.toString();
   }
 
 
-  private static String[][] createGameFiledFromFile(String fileNameInput) {
+  private String[][] createGameFiledFromFile(String fileNameInput) {
     List<String> lines = getParametersFromFile(fileNameInput);
 
     String[] parametersFor2DArray = lines.get(0).split(",");
@@ -126,13 +121,12 @@ public class GameOfLife {
 
     lines.remove(0);
 
-    List<String> stringsForBuildGameField = lines;
     String[][] field = new String[high2DArray][width2DArray];
 
     for (int rowIndex = 0; rowIndex < high2DArray; rowIndex++) {
       for (int columnIndex = 0;
-          columnIndex < stringsForBuildGameField.get(rowIndex).split(" ").length; columnIndex++) {
-        field[rowIndex][columnIndex] = stringsForBuildGameField.get(rowIndex)
+          columnIndex < lines.get(rowIndex).split(" ").length; columnIndex++) {
+        field[rowIndex][columnIndex] = lines.get(rowIndex)
             .split(" ")[columnIndex];
       }
     }
@@ -140,7 +134,7 @@ public class GameOfLife {
     return field;
   }
 
-  private static List<String> getParametersFromFile(String fileNameInput) {
+  private List<String> getParametersFromFile(String fileNameInput) {
     String filePath = "src/test/resources/" + fileNameInput;
     List<String> lines = new ArrayList<>();
     try {
