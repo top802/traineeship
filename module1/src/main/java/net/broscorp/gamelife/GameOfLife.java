@@ -26,17 +26,15 @@ public class GameOfLife {
 
     String[][] gameField = createGameFiledFromFile(fileNameInput);
     int iteration = Integer.parseInt(getParametersFromFile(fileNameInput).get(0).split(",")[2]);
-    int[][] directionField = createDirectionField();
     String[][] nextGameField = new String[gameField.length][gameField[0].length];
     while (iteration>0){
-      gameIteration(gameField, directionField, nextGameField);
+      gameIteration(gameField, nextGameField);
       iteration--;
     }
     saveResultToFile(gameField, fileNameOutput);
   }
 
-  private void gameIteration(String[][] gameField, int[][] directionField,
-      String[][] nextGameField) {
+  private void gameIteration(String[][] gameField, String[][] nextGameField) {
     int high2DArray = gameField.length;
     int width2DArray = gameField[0].length;
     for(int rowIndex = 0; rowIndex < high2DArray; rowIndex++){
@@ -54,11 +52,6 @@ public class GameOfLife {
         }
       }
     }
-//    for(int rowIndex = 0; rowIndex < gameField.length; rowIndex++){
-//      for(int columnIndex = 0; columnIndex < gameField[0].length; columnIndex++){
-//        gameField[rowIndex][columnIndex] = nextGameField[rowIndex][columnIndex];
-//      }
-//    }
   }
 
   private int calculateLiveCell(String[][] gameField, int rowIndex, int columnIndex) {
@@ -71,15 +64,7 @@ public class GameOfLife {
         liveCellCount += gameField[neighborIndexByRows][neighborIndexByColumns].equals("X") ? 1 : 0;
       }
     }
-//    liveCellCount -= gameField[rowIndex][columnIndex].equals("X") ? 1 : 0;
-//    for(int[] direction : directionField){
-//      int x = direction[0] + rowIndex;
-//      int y = direction[1] + columnIndex;
-//      boolean isCellHasNeighbor = (x >= 0 && x < gameField.length) && (y >= 0 && y < gameField[0].length);
-//      if(isCellHasNeighbor && gameField[x][y] != null && gameField[x][y].equals("X")) {
-//        liveCellCount++;
-//      }
-//    }
+
     return liveCellCount;
   }
 
@@ -102,8 +87,13 @@ public class GameOfLife {
     StringBuilder gameFiledToStr = new StringBuilder();
     for (int row = 0; row < gameField.length; row++) {
       for (int col = 0; col < gameField[row].length; col++) {
-        gameFiledToStr.append(gameField[row][col]);
-        if (col != gameField[row].length) gameFiledToStr.append(" ");
+
+        if (col == gameField[row].length - 1) {
+          gameFiledToStr.append(gameField[row][col]);
+
+        } else {
+          gameFiledToStr.append(gameField[row][col]).append(" ");
+        }
 
       }
       if (row < gameField.length -1) gameFiledToStr.append("\n");
